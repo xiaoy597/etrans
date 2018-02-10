@@ -1,0 +1,40 @@
+#
+# Document Sync systemd service file
+#
+# systemd supports lots of fancy features, look here (and linked docs) for a full list: 
+#   http://www.freedesktop.org/software/systemd/man/systemd.exec.html
+#
+# Note: this file ( /usr/lib/systemd/system/doc-sync.service )
+# will be overwritten on package upgrade, please copy the file to 
+#
+#  /etc/systemd/system/doc-sync.service 
+#  
+# to make needed changes.
+# 
+# systemd-delta can be used to check differences between the two doc-sync.service files.
+#
+
+[Unit]
+Description=Document Sync Service
+After=mysqld.target
+
+[Install]
+WantedBy=multi-user.target
+
+[Service]
+User=root
+Group=root
+
+# Execute pre and post scripts as root
+PermissionsStartOnly=true
+
+# Start main service
+ExecStart=/usr/bin/python /usr/local/etrans/bin/doc-sync.py
+
+# Give up if ping don't get an answer
+TimeoutSec=5
+
+Restart=always
+PrivateTmp=false
+
+

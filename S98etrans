@@ -1,0 +1,59 @@
+#!/bin/bash
+#
+# Init file for Document Sync server daemon
+#
+# source function library
+. /etc/rc.d/init.d/functions
+
+RETVAL=0
+prog="Document Sync Server"
+
+# Some functions to make the below more readable
+PID_FILE=/var/run/doc-sync.pid
+
+start()
+{
+	echo -n $"Starting $prog:"
+	/usr/bin/python /usr/local/etrans/bin/doc-sync.py
+	RETVAL=$?
+	[ $RETVAL -eq 0 ] && touch /var/lock/subsys/doc-sync
+	echo
+}
+
+stop()
+{
+	rm -f /var/lock/subsys/sshd
+	echo
+}
+
+reload()
+{
+	echo
+}
+
+case "$1" in
+	start)
+		start
+		;;
+	stop)
+		stop
+		;;
+	restart)
+		stop
+		start
+		;;
+	reload)
+		reload
+		;;
+	condrestart)
+		if [ -f /var/lock/subsys/doc-sync ] ; then
+			echo
+		fi
+		;;
+	status)
+		;;
+	*)
+		echo $"Usage: $0 {start|stop|restart|reload|condrestart|status}"
+		RETVAL=1
+esac
+exit $RETVAL
