@@ -46,8 +46,6 @@ def get_configs():
 def load_doc_data(data_file):
     data_fh = open(data_file, "r")
 
-    sql_fh = open(sql_file, "w")
-
     line = data_fh.readline()
 
     data_fh.close()
@@ -72,6 +70,8 @@ def load_doc_data(data_file):
         createtime=int(time.mktime(time.strptime(columns[13], '%Y-%m-%d %H:%M:%S'))), lastmodifyby=columns[14],
         lastmodifytime=int(time.mktime(time.strptime(columns[15], '%Y-%m-%d %H:%M:%S'))), version=columns[16]
     )
+
+    sql_fh = open(sql_file, "w")
 
     sql_fh.write(delete_sql)
     sql_fh.write(insert_sql)
