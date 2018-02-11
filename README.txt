@@ -26,14 +26,13 @@ DatabasePass		数据库用户口令
 
 3、服务的启动、停止和重启
 
+默认安装情况下，服务会自动随操作系统启动。以root用户执行以下命令对服务进行手工操作，
+
 启动服务：
-	以root用户执行
 	/etc/init.d/doc-sync start
 停止服务：
-	以root用户执行
 	/etc/init.d/doc-sync stop
 重启服务：
-	以root用户执行
 	/etc/init.d/doc-sync restart
 
 程序执行日志在/usr/local/etrans/log目录下。
