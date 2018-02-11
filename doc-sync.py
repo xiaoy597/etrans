@@ -11,10 +11,8 @@ import logging.handlers
 import platform
 import signal
 
-# load_sql_file = r'd:\tmp\etrans\etrans_load_doc_data.sql'
 sql_file = '/tmp/etrans_load_doc_data.sql'
 
-# config_file = r'd:\tmp\etrans\etc\conf.ini'
 config_file = '/usr/local/etrans/etc/conf.ini'
 
 log_file = '/usr/local/etrans/log/etrans.log'
@@ -110,6 +108,7 @@ def do_job():
                         else:
                             logger.error('Source file %s is not found.' % source_file)
             time.sleep(3)
+
     except Exception as e:
         warning_message = traceback.format_exc()
         logger.error(warning_message)
