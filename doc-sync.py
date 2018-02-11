@@ -9,14 +9,26 @@ import ConfigParser
 import traceback
 import logging.handlers
 import platform
+import signal
 
 # load_sql_file = r'd:\tmp\etrans\etrans_load_doc_data.sql'
-load_sql_file = '/tmp/etrans_load_doc_data.sql'
+sql_file = '/tmp/etrans_load_doc_data.sql'
 
 # config_file = r'd:\tmp\etrans\etc\conf.ini'
 config_file = '/usr/local/etrans/etc/conf.ini'
 
 log_file = '/usr/local/etrans/log/etrans.log'
+
+pid_file = '/var/run/doc-sync.pid'
+
+
+def sig_handler(sig, frame):
+    logger.info("Stopping document sync server ...")
+    os.kill(child_pid, signal.SIGTERM)
+
+    global should_exit
+
+    should_exit = True
 
 
 def get_configs():
@@ -34,13 +46,13 @@ def get_configs():
 
 
 def load_doc_data(data_file):
-    data_file = open(data_file, "r")
+    data_fh = open(data_file, "r")
 
-    sql_file = open(load_sql_file, "w")
+    sql_fh = open(sql_file, "w")
 
-    line = data_file.readline()
+    line = data_fh.readline()
 
-    data_file.close()
+    data_fh.close()
 
     columns = line.split("|")
 
@@ -63,13 +75,13 @@ def load_doc_data(data_file):
         lastmodifytime=int(time.mktime(time.strptime(columns[15], '%Y-%m-%d %H:%M:%S'))), version=columns[16]
     )
 
-    sql_file.write(delete_sql)
-    sql_file.write(insert_sql)
+    sql_fh.write(delete_sql)
+    sql_fh.write(insert_sql)
 
-    sql_file.close()
+    sql_fh.close()
 
     os.system("mysql -u{user} -p{password} < {sql_file}".format(
-        user=configs['db_user'], password=configs['db_pass'], sql_file=load_sql_file))
+        user=configs['db_user'], password=configs['db_pass'], sql_file=sql_file))
 
 
 def do_job():
@@ -118,27 +130,51 @@ if __name__ == "__main__":
 
     os_version = platform.platform()
 
+    if os.path.exists('/var/lock/subsys/doc-sync'):
+        logger.error('Document Sync service is already started, please do not start multiple instances.')
+        sys.exit(1)
+
     if os_version.find('centos-6') > 0:
         pid = os.fork()
         if pid > 0:
             sys.exit(0)
 
         try:
-            while True:
+            global should_exit
+            should_exit = False
+
+            pid_fh = open(pid_file, "w")
+            pid_fh.write(str(os.getpid()))
+            pid_fh.close()
+
+            while not should_exit:
                 pid = os.fork()
                 if pid > 0:
-                    status = os.wait()
-                    logger.error('Child process(%d) terminated with status %d' % (status[0], status[1]))
-                    logger.error('Restarting ...')
+
+                    global child_pid
+                    child_pid = pid
+
+                    while True:
+                        signal.signal(signal.SIGTERM, sig_handler)
+                        try:
+                            status = os.wait()
+                            logger.error('Child process(%d) terminated with status %d' % (status[0], status[1]))
+                            break
+                        except OSError as e:
+                            pass
+
                 else:
                     logger.info('Document Sync server started.')
                     do_job()
+
         except Exception as e:
             warning_message = traceback.format_exc()
             logger.error(warning_message)
             sys.exit(-1)
+
     elif os_version.find('centos-7') > 0:
         do_job()
+
     else:
         logger.error('Unsupported platform %s' % os_version)
         sys.exit(1)

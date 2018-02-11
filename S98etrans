@@ -10,6 +10,7 @@ prog="Document Sync Server"
 
 # Some functions to make the below more readable
 PID_FILE=/var/run/doc-sync.pid
+DOC_SYNC=doc-sync
 
 start()
 {
@@ -22,8 +23,11 @@ start()
 
 stop()
 {
-	rm -f /var/lock/subsys/sshd
-	echo
+    echo -n $"Stopping $prog:"
+    killproc -p $PID_FILE $DOC_SYNC -TERM
+    RETVAL=$?
+    [ $RETVAL -eq 0 ] && rm -f /var/lock/subsys/doc-sync
+    echo
 }
 
 reload()
