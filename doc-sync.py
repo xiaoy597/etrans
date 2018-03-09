@@ -87,7 +87,7 @@ def do_job():
         global configs
         configs = get_configs()
 
-        backup_dir = os.path.join(configs['source_dir'], 'BAK')
+        backup_dir = configs['source_dir'] + '_BAK'
         if not os.path.exists(backup_dir):
             os.mkdir(backup_dir)
 
