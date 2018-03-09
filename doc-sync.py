@@ -78,14 +78,18 @@ def load_doc_data(data_file):
 
     sql_fh.close()
 
-    os.system("mysql -u{user} -p{password} < {sql_file}".format(
-        user=configs['db_user'], password=configs['db_pass'], sql_file=sql_file))
+    os.system("mysql -h {server} -u{user} -p{password} < {sql_file}".format(
+        server=configs['db_server'], user=configs['db_user'], password=configs['db_pass'], sql_file=sql_file))
 
 
 def do_job():
     try:
         global configs
         configs = get_configs()
+
+        backup_dir = os.path.join(configs['source_dir'], 'BAK')
+        if not os.path.exists(backup_dir):
+            os.mkdir(backup_dir)
 
         search_pattern = re.compile('_data$')
         while True:
@@ -104,6 +108,7 @@ def do_job():
                             logger.info('Document info is loaded.')
 
                             os.unlink(source_file)
+                            shutil.copy(os.path.join(configs['source_dir'], afile), os.path.join(backup_dir, afile))
                             os.unlink(os.path.join(configs['source_dir'], afile))
                         else:
                             logger.error('Source file %s is not found.' % source_file)
